@@ -1,11 +1,13 @@
 import NearestMethod.FindNearestMethod;
 import Util.Action;
+import getAllDistances.GetAllDistancesMethod;
 
 import java.util.*;
 
 public class Main {
 
     public static void main(String[] args) {
+
 
 
         System.out.println("Find nearest present method: ");
@@ -16,6 +18,16 @@ public class Main {
         System.out.println("Length: " + actionsNearestMethod.size());
 
 
+
+
+        /*System.out.println("using Get all distances method");
+        List<Action> actionsAllDistances = GetAllDistancesMethod.execute();
+
+        System.out.println("done");
+
+         */
+
     }
+
 
 }

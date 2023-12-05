@@ -194,8 +194,8 @@ public class FindNearestMethod {
 
             nothingFound = true;
 
-            for (FieldData[] fieldDatum : fieldData) {
-                for (FieldData relevantField : fieldDatum) {
+            for (FieldData[] column : fieldData) {
+                for (FieldData relevantField : column) {
 
 
 

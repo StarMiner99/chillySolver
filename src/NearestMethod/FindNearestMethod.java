@@ -1,3 +1,7 @@
+package NearestMethod;
+
+import Util.*;
+
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -124,7 +128,7 @@ public class FindNearestMethod {
 
     public static Move getEndpoint(Vec2 mov, Vec2 start) {
         // get left move
-        Present hitPresent = null;
+        Vec2 hitPresent = null;
         boolean obstacle = false;
         int xNow;
         int yNow;
@@ -155,7 +159,7 @@ public class FindNearestMethod {
                     obstacle = true;
                     break;
                 case '$':
-                    hitPresent = new Present(new Vec2(nextCordX, nextCordY));
+                    hitPresent = new Vec2(nextCordX, nextCordY);
                     break;
                 case 'O':
                     Vec2 destCord = portalSolver(new Vec2(nextCordX, nextCordY));
@@ -231,7 +235,7 @@ public class FindNearestMethod {
                                 posNow = dest;
 
                                 // wipe present from map
-                                Vec2 presentLocation = moveRight.present().getLocation();
+                                Vec2 presentLocation = moveRight.present();
 
                                 map[presentLocation.getY()] = map[presentLocation.getY()].substring(0, presentLocation.getX()) + ' ' + map[presentLocation.getY()].substring(presentLocation.getX() + 1);
 
@@ -259,7 +263,7 @@ public class FindNearestMethod {
                                 posNow = dest;
 
                                 // wipe present from map
-                                Vec2 presentLocation = moveDown.present().getLocation();
+                                Vec2 presentLocation = moveDown.present();
 
                                 map[presentLocation.getY()] = map[presentLocation.getY()].substring(0, presentLocation.getX()) + ' ' + map[presentLocation.getY()].substring(presentLocation.getX() + 1);
 
@@ -287,7 +291,7 @@ public class FindNearestMethod {
                                 posNow = dest;
 
                                 // wipe present from map
-                                Vec2 presentLocation = moveLeft.present().getLocation();
+                                Vec2 presentLocation = moveLeft.present();
 
                                 map[presentLocation.getY()] = map[presentLocation.getY()].substring(0, presentLocation.getX()) + ' ' + map[presentLocation.getY()].substring(presentLocation.getX() + 1);
 
@@ -314,7 +318,7 @@ public class FindNearestMethod {
                                 posNow = dest;
 
                                 // wipe present from map
-                                Vec2 presentLocation = moveUp.present().getLocation();
+                                Vec2 presentLocation = moveUp.present();
 
                                 map[presentLocation.getY()] = map[presentLocation.getY()].substring(0, presentLocation.getX()) + ' ' + map[presentLocation.getY()].substring(presentLocation.getX() + 1);
 

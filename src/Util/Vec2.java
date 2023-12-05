@@ -1,3 +1,5 @@
+package Util;
+
 import java.util.Objects;
 
 public class Vec2 {
@@ -27,7 +29,7 @@ public class Vec2 {
 
     @Override
     public String toString() {
-        return "Vec2{" +
+        return "Util.Vec2{" +
                 "x=" + x +
                 ", y=" + y +
                 '}';

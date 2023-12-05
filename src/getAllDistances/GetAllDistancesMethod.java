@@ -16,6 +16,8 @@ public class GetAllDistancesMethod {
 
         System.out.println(finalData.size());
 
+        fetchNearestNeighbor();
+
         return null;
     }
 
@@ -173,7 +175,7 @@ public class GetAllDistancesMethod {
     private static final List<Vec2> hasBeenScanned = new ArrayList<>();
     private static final List<Vec2> needToBeScanned = new LinkedList<>();
 
-    private static HashMap<Vec2, List<List<Action>>> finalData = new HashMap<>();
+    private static HashMap<Vec2, List<Pair<List<Action>, Pair<Vec2, Vec2>>>> finalData = new HashMap<>(); // first Vec2 start in list 24 options to go to presents, action list for action array, first vec2 for present, second for destination
 
     private static void scanUntilDone() {
 
@@ -186,9 +188,9 @@ public class GetAllDistancesMethod {
                 hasBeenScanned.add(scannedVector);
 
 
-                List<List<Action>> actionList = new ArrayList<>();
+                List<Pair<List<Action>, Pair<Vec2, Vec2>>> actionList = new ArrayList<>();
 
-                Pair<List<Action>, Vec2> nextPresent = null;
+                Pair<List<Action>, Pair<Vec2, Vec2>> nextPresent = null;
 
                 String[] mapCopy = new String[40];
                 System.arraycopy(map, 0, mapCopy, 0, map.length);
@@ -198,11 +200,11 @@ public class GetAllDistancesMethod {
 
                 do {
                     map2Moves(modField, mapCopy);
-                    nextPresent = getNearestPresent(scannedVector, modField);
+                    nextPresent = getNearestPresentOrGoal(scannedVector, modField);
                     if (nextPresent != null) {
-                        mapCopy[nextPresent.b.getY()] = mapCopy[nextPresent.b.getY()].substring(0, nextPresent.b.getX()) + ' ' + mapCopy[nextPresent.b.getY()].substring(nextPresent.b.getX() + 1);
+                        mapCopy[nextPresent.b.a.getY()] = mapCopy[nextPresent.b.a.getY()].substring(0, nextPresent.b.a.getX()) + ' ' + mapCopy[nextPresent.b.a.getY()].substring(nextPresent.b.a.getX() + 1);
 
-                        actionList.add(nextPresent.a);
+                        actionList.add(nextPresent);
                     }
 
                 } while (nextPresent != null);
@@ -213,7 +215,7 @@ public class GetAllDistancesMethod {
         }
     }
 
-    private static Pair<List<Action>, Vec2> getNearestPresent(Vec2 origin, FieldData[][] field) {
+    private static Pair<List<Action>, Pair<Vec2, Vec2>> getNearestPresentOrGoal(Vec2 origin, FieldData[][] field) {
 
         field[origin.getX()][origin.getY()].setReachableIn(0);
 
@@ -244,7 +246,7 @@ public class GetAllDistancesMethod {
                     }
 
                     if (reachableIn >= 0) {
-                        Pair<List<Action>, Vec2> movesToPresent;
+                        Pair<List<Action>, Pair<Vec2, Vec2>> movesToPresent;
                         movesToPresent = analyzeMove(singleField.getDestRight(), field, singleField, Action.RIGHT);
                         if (movesToPresent != null) {
                             return movesToPresent;
@@ -270,11 +272,59 @@ public class GetAllDistancesMethod {
             }
         }
 
+        boolean goalExists = field[goal.getX()][goal.getY()] == null;
+
+        while(goalExists) {
+
+
+            for (FieldData[] column:
+                    field) {
+                for (FieldData singleField :
+                        column) {
+
+                    int reachableIn;
+
+                    if(singleField != null) {
+                        reachableIn = singleField.getReachableIn();
+
+                    } else {
+                        reachableIn = -1;
+                    }
+
+                    if (reachableIn >= 0) {
+                        Pair<List<Action>, Pair<Vec2, Vec2>> movesToGoal;
+                        movesToGoal = analyzeMoveOnGoal(singleField.getDestRight(), field, singleField, Action.RIGHT);
+                        if (movesToGoal != null) {
+                            return movesToGoal;
+                        }
+
+                        movesToGoal = analyzeMoveOnGoal(singleField.getDestDown(), field, singleField, Action.DOWN);
+                        if (movesToGoal != null) {
+                            return movesToGoal;
+                        }
+
+                        movesToGoal = analyzeMoveOnGoal(singleField.getDestLeft(), field, singleField, Action.LEFT);
+                        if (movesToGoal != null) {
+                            return movesToGoal;
+                        }
+
+                        movesToGoal = analyzeMoveOnGoal(singleField.getDestUp(), field, singleField, Action.UP);
+                        if (movesToGoal != null) {
+                            return movesToGoal;
+                        }
+                    }
+
+                }
+            }
+
+
+        }
+
         return null;
 
     }
 
-    private static Pair<List<Action>, Vec2> analyzeMove(Move move, FieldData[][] field, FieldData moveOrigin, Action direction) {
+    private static Pair<List<Action>, Pair<Vec2, Vec2>> analyzeMove(Move move, FieldData[][] field, FieldData moveOrigin, Action direction) {
         if (move == null) {
             return null;
         }
@@ -295,11 +345,89 @@ public class GetAllDistancesMethod {
             Vec2 presentVec = move.present();
             needToBeScanned.add(dest);
 
-            return new Pair<>(actionList, presentVec);
+            return new Pair<>(actionList, new Pair<>(presentVec, dest));
 
         }
 
         return null;
+    }
+
+    private static Pair<List<Action>, Pair<Vec2, Vec2>> analyzeMoveOnGoal(Move move, FieldData[][] field, FieldData moveOrigin, Action direction) {
+        if (move == null) {
+            return null;
+        }
+
+        Vec2 dest = move.goal();
+        FieldData analyzedField = field[dest.getX()][dest.getY()];
+
+        if(analyzedField != null && analyzedField.getReachableIn() == -1) {
+            analyzedField.setReachableIn(moveOrigin.getReachableIn() + 1);
+
+            analyzedField.getReachableWith().clear();
+            analyzedField.getReachableWith().addAll(moveOrigin.getReachableWith());
+            analyzedField.getReachableWith().add(direction);
+        }
+
+        if (dest.equals(goal)) {
+            moveOrigin.getReachableWith().add(direction);
+            return new Pair<>(moveOrigin.getReachableWith(), new Pair<>(dest, dest));
+        }
+
+        return null;
+    }
+
+    private static void fetchNearestNeighbor() {
+
+        List<Action> actionList = new LinkedList<>();
+
+        List<Vec2> pickedUp = new LinkedList<>();
+        Vec2 originVector = startPenguin;
+
+        for (int j = 0; j < 24; j++) {
+
+            List<Pair<List<Action>, Pair<Vec2, Vec2>>> analyzedData = finalData.get(originVector);
+
+            if (analyzedData != null) { // if originVector is the goal analyzed Data will be null because there is no way to move to anywhere from the goal
+
+
+                int smallestIndex = -1;
+                for (int i = 0; i < analyzedData.size(); i++) {
+                    try {
+                        if (analyzedData.get(i).a.size() < analyzedData.get(smallestIndex).a.size() && !pickedUp.contains(analyzedData.get(i).b.a) && !analyzedData.get(i).b.a.equals(goal)) {
+                            smallestIndex = i;
+                        }
+                    } catch (IndexOutOfBoundsException e) {
+                        if (!pickedUp.contains(analyzedData.get(i).b.a) && !analyzedData.get(i).b.a.equals(goal)) {
+                            smallestIndex = i;
+                        }
+                    }
+
+                }
+
+                originVector = analyzedData.get(smallestIndex).b.b;
+                pickedUp.add(analyzedData.get(smallestIndex).b.a);
+                actionList.addAll(analyzedData.get(smallestIndex).a);
+            }
+
+
+
+        }
+        // one last time until we are in goal
+
+        List<Pair<List<Action>, Pair<Vec2, Vec2>>> analyzedData = finalData.get(originVector);
+
+        for (Pair<List<Action>, Pair<Vec2, Vec2>> dataPair:
+             analyzedData) {
+            if (dataPair.b.a.equals(goal)) {
+                actionList.addAll(dataPair.a);
+            }
+
+        }
+
+
+        System.out.println(actionList);
+        System.out.println(actionList.size());
+
     }
 
 

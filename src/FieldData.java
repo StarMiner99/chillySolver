@@ -1,5 +1,11 @@
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 public class FieldData {
     private int reachableIn = -1;
+
+    private final List<Action> reachableWith = new LinkedList<>();
 
     private final Move destRight;
     private final Move destDown;
@@ -43,5 +49,9 @@ public class FieldData {
 
     public Field getFieldType() {
         return fieldType;
+    }
+
+    public List<Action> getReachableWith() {
+        return reachableWith;
     }
 }

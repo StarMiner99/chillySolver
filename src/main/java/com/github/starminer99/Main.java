@@ -11,6 +11,8 @@ public class Main {
 
 
     /*
+
+    // first method -> gives us 180 moves
         System.out.println("Find nearest present method: ");
 
         List<Action> actionsNearestMethod = FindNearestMethod.execute();
@@ -23,6 +25,7 @@ public class Main {
 
 
 
+        // second and third method:
         System.out.println("using Get all distances method");
         List<Action> actionsAllDistances = GetAllDistancesMethod.execute();
 

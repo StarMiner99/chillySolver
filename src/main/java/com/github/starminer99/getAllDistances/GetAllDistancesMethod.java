@@ -18,7 +18,12 @@ public class GetAllDistancesMethod {
 
         System.out.println(finalData.size());
 
+
+        // second method -> gives 160 moves
         //fetchNearestNeighbor();
+
+
+        // third method -> gives 117 moves
 
         generateDistanceMatrices();
 
@@ -592,9 +597,13 @@ public class GetAllDistancesMethod {
         RoutingSearchParameters searchParameters =
                 main.defaultRoutingSearchParameters()
                         .toBuilder()
-                        .setFirstSolutionStrategy(FirstSolutionStrategy.Value.PATH_CHEAPEST_ARC)
+                        .setFirstSolutionStrategy(FirstSolutionStrategy.Value.AUTOMATIC)
                         .build();
 
+        //tried: AUTOMATIC: 116(+2 -1); PATH_CHEAPEST_ARC: 116 (+2 -1); FIRST_UNBOUND_MIN_VALUE: 126; ALL_UNPERFORMED: ERROR; BEST_INSERTION: ERROR
+        //CHRISTOFIDES: 134; EVALUATOR_STRATEGY: ERROR; GLOBAL_CHEAPEST_ARC: 124; LOCAL_CHEAPEST_ARC: 116(+2-1); LOCAL_CHEAPEST_COST_INSERTION: 137
+        //LOCAL_CHEAPEST_INSERTION: 137; PARALLEL_CHEAPEST_INSERTION: 123; PATH_MOST_CONSTRAINED_ARC: 122; SAVINGS: 138;
+        //SEQUENTIAL_CHEAPEST_INSERTION: 123; SWEEP: ERROR;
         Assignment solution = routing.solveWithParameters(searchParameters);
 
 
@@ -611,7 +620,7 @@ public class GetAllDistancesMethod {
         // Inspect solution.
         System.out.println("Route:");
 
-        solutionIndex = new int[25];
+        solutionIndex = new int[25]; // not 26 because we missed one see printIntArrayToMoveArray()
 
         long routeDistance = 0;
         String route = "";
@@ -635,7 +644,7 @@ public class GetAllDistancesMethod {
 
     private static void printIntArrayToMoveArray() {
 
-        startFieldOrder.add(goal); // add the goal to the startfieldList so we can iterate through it more easily
+        startFieldOrder.add(goal); // add the goal to the startfieldList, so we can iterate through it more easily
 
         List<Action> actionList = new LinkedList<>();
 
@@ -656,6 +665,7 @@ public class GetAllDistancesMethod {
                             fullActionList.addAll(actionList);
                             System.out.println("Insert quickfix here");
                             // UP, DOWN is the correct move to insert here (tried out first part in browser)
+                            // needed because the field we land on is the same for two presents ( this only occurs once)
                             fullActionList.add(Action.UP);
                             fullActionList.add(Action.DOWN);
 

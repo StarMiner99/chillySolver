@@ -6,6 +6,14 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 
+/*
+#############################
+BETTER METHOD -> SEE GetAllDistancesMethod.java
+-----------------------------
+############################
+ */
+
+
 public class FindNearestMethod {
 
     public static List<Action> execute() {

@@ -1,4 +1,4 @@
-package Util;
+package com.github.starminer99.Util;
 
 import java.util.Objects;
 
@@ -29,7 +29,7 @@ public class Vec2 {
 
     @Override
     public String toString() {
-        return "Util.Vec2{" +
+        return "com.github.starminer99.Util.Vec2{" +
                 "x=" + x +
                 ", y=" + y +
                 '}';

@@ -1,6 +1,7 @@
-import NearestMethod.FindNearestMethod;
-import Util.Action;
-import getAllDistances.GetAllDistancesMethod;
+package com.github.starminer99;
+
+import com.github.starminer99.Util.Action;
+import com.github.starminer99.getAllDistances.GetAllDistancesMethod;
 
 import java.util.*;
 

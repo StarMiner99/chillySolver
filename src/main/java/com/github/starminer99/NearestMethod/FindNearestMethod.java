@@ -1,6 +1,6 @@
-package NearestMethod;
+package com.github.starminer99.NearestMethod;
 
-import Util.*;
+import com.github.starminer99.Util.*;
 
 import java.util.Hashtable;
 import java.util.LinkedList;

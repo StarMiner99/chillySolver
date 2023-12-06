@@ -1,8 +1,4 @@
-package Util;
-
-import Util.Action;
-import Util.Field;
-import Util.Move;
+package com.github.starminer99.Util;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -1,6 +1,8 @@
-package getAllDistances;
+package com.github.starminer99.getAllDistances;
 
-import Util.*;
+import com.github.starminer99.Util.*;
+import com.google.ortools.Loader;
+import com.google.ortools.constraintsolver.*;
 
 import java.util.*;
 
@@ -16,7 +18,18 @@ public class GetAllDistancesMethod {
 
         System.out.println(finalData.size());
 
-        fetchNearestNeighbor();
+        //fetchNearestNeighbor();
+
+        generateDistanceMatrices();
+
+        System.out.println("finished generating data for google or");
+
+        solveWithGoogleOR();
+
+        System.out.println("finished google or");
+        printIntArrayToMoveArray();
+
+        System.out.println("finished");
 
         return null;
     }
@@ -430,6 +443,237 @@ public class GetAllDistancesMethod {
 
     }
 
+    private static long[][] distanceMatrix;
+
+    private static List<Vec2> presentOrder = new ArrayList<>();
+    private static List<Vec2> startFieldOrder = new ArrayList<>();
+    private static List<List<Integer>> disjunctions = new ArrayList<>();
+
+    private static int[] startIndex = new int[1];
+    private static int[] endIndex = new int[1];
+    private static void generateDistanceMatrices() {
+
+        // generate distance matrices for google or
+
+        List<Pair<List<Action>, Pair<Vec2, Vec2>>> analyzedData = finalData.get(startPenguin);
+        for (Pair<List<Action>, Pair<Vec2, Vec2>> moveToPresent:
+             analyzedData) {
+
+            presentOrder.add(moveToPresent.b.a);
+
+        }
+
+        startFieldOrder.addAll(finalData.keySet());
+
+
+        distanceMatrix = new long[startFieldOrder.size() + 1][startFieldOrder.size() + 1];
+        Arrays.fill(distanceMatrix[startFieldOrder.size()], Integer.MAX_VALUE); // distance from goal to anywhere is infinite
+        distanceMatrix[startFieldOrder.size()][startFieldOrder.size()] = 0; // distance from goal to goal = 0
+        endIndex[0] = startFieldOrder.size() ;
+
+        System.out.println(presentOrder);
+        System.out.println(presentOrder.size());
+        System.out.println(startFieldOrder);
+        System.out.println(startFieldOrder.size());
+
+        for (int i = 0; i < startFieldOrder.size(); i++) {
+
+            for (int j = 0; j < startFieldOrder.size(); j++) {
+
+                Vec2 startField = startFieldOrder.get(i);
+                Vec2 endField = startFieldOrder.get(j);
+
+                List<Pair<List<Action>, Pair<Vec2, Vec2>>> startData = finalData.get(startField);
+
+                int routeLength = Integer.MAX_VALUE;
+
+                for (Pair<List<Action>, Pair<Vec2, Vec2>> possibleAction:
+                     startData) {
+
+                    if (possibleAction.b.b.equals(endField)) {
+                        routeLength = possibleAction.a.size();
+                    }
+
+                }
+
+                distanceMatrix[i][j] = routeLength;
+
+
+            }
+
+            // add information on distance to goal
+            int routeLength = Integer.MAX_VALUE;
+
+            Vec2 startField = startFieldOrder.get(i);
+            List<Pair<List<Action>, Pair<Vec2, Vec2>>> startData = finalData.get(startField);
+
+            for (Pair<List<Action>, Pair<Vec2, Vec2>> possibleAction:
+                    startData) {
+
+                if (possibleAction.b.b.equals(goal)) {
+                    routeLength = possibleAction.a.size();
+                }
+
+            }
+
+            distanceMatrix[i][53] = routeLength;
+
+
+        }
+
+        for (int i = 0; i < presentOrder.size(); i++) {
+
+            Vec2 present = presentOrder.get(i);
+            disjunctions.add(new LinkedList<>());
+            for (int j = 0; j < startFieldOrder.size(); j++) {
+
+                Vec2 startField = startFieldOrder.get(j);
+                List<Pair<List<Action>, Pair<Vec2, Vec2>>> startData = finalData.get(startField);
+
+                for (Pair<List<Action>, Pair<Vec2, Vec2>> possibleAction:
+                        startData) {
+
+                    if (possibleAction.b.a.equals(present)) {
+                        int indexOfGoal = startFieldOrder.indexOf(possibleAction.b.b);
+                        if (!disjunctions.get(i).contains(indexOfGoal)) {
+                            disjunctions.get(i).add(indexOfGoal);
+                        }
+
+                    }
+
+                }
+
+
+            }
+
+        }
+
+        startIndex[0] = startFieldOrder.indexOf(startPenguin);
+
+        System.out.println(Arrays.deepToString(distanceMatrix));
+        System.out.println(disjunctions);
+
+        System.out.println(startIndex[0]);
+        System.out.println(endIndex[0]);
+
+
+    }
+
+    public static void solveWithGoogleOR() {
+
+        Loader.loadNativeLibraries();
+
+        RoutingIndexManager manager = new RoutingIndexManager(distanceMatrix.length, 1, startIndex, endIndex);
+
+        RoutingModel routing = new RoutingModel(manager);
+
+        final int transitCallbackIndex =
+                routing.registerTransitCallback((long fromIndex, long toIndex) -> {
+            int fromNode = manager.indexToNode(fromIndex);
+            int toNode = manager.indexToNode(toIndex);
+
+            return distanceMatrix[fromNode][toNode];
+        });
+
+        routing.setArcCostEvaluatorOfAllVehicles(transitCallbackIndex);
+
+        for (List<Integer> disjunction:
+             disjunctions) {
+            if (disjunction.size() > 1) {
+
+                System.out.println(Arrays.toString(disjunction.stream().mapToInt(Integer::intValue).toArray()));
+                routing.addDisjunction(manager.nodesToIndices(disjunction.stream().mapToInt(Integer::intValue).toArray()));
+            }
+
+        }
+
+
+
+        RoutingSearchParameters searchParameters =
+                main.defaultRoutingSearchParameters()
+                        .toBuilder()
+                        .setFirstSolutionStrategy(FirstSolutionStrategy.Value.PATH_CHEAPEST_ARC)
+                        .build();
+
+        Assignment solution = routing.solveWithParameters(searchParameters);
+
+
+        printSolution(routing, manager, solution);
+
+
+    }
+
+    private static int[] solutionIndex;
+    private static void printSolution(
+            RoutingModel routing, RoutingIndexManager manager, Assignment solution) {
+        // Solution cost.
+        System.out.println("Objective: " + solution.objectiveValue() + "miles");
+        // Inspect solution.
+        System.out.println("Route:");
+
+        solutionIndex = new int[25];
+
+        long routeDistance = 0;
+        String route = "";
+        long index = routing.start(0);
+        int currentIndex = 0;
+        while (!routing.isEnd(index)) {
+            solutionIndex[currentIndex] = manager.indexToNode(index);
+            currentIndex++;
+            route += manager.indexToNode(index) + " -> ";
+            long previousIndex = index;
+            index = solution.value(routing.nextVar(index));
+            routeDistance += routing.getArcCostForVehicle(previousIndex, index, 0);
+        }
+        route += manager.indexToNode(routing.end(0));
+        solutionIndex[currentIndex] = (int) routing.end(0);
+        System.out.println(route);
+        System.out.println("Route distance: " + routeDistance + "miles");
+        System.out.println(Arrays.toString(solutionIndex));
+    }
+
+
+    private static void printIntArrayToMoveArray() {
+
+        startFieldOrder.add(goal); // add the goal to the startfieldList so we can iterate through it more easily
+
+        List<Action> actionList = new LinkedList<>();
+
+        List<Action> fullActionList = new LinkedList<>();
+        for (int i = 0; i < solutionIndex.length; i++) {
+
+            List<Pair<List<Action>, Pair<Vec2, Vec2>>> data = finalData.get(startFieldOrder.get(solutionIndex[i]));
+
+
+            if (i+1 < solutionIndex.length) {
+                for (Pair<List<Action>, Pair<Vec2, Vec2>> route:
+                     data) {
+
+                    if (route.b.b.equals(startFieldOrder.get(solutionIndex[i+1]))) {
+                        actionList.addAll(route.a);
+                        if (solutionIndex[i+1] == 12) {
+                            System.out.println(actionList);
+                            fullActionList.addAll(actionList);
+                            System.out.println("Insert quickfix here");
+                            // UP, DOWN is the correct move to insert here (tried out first part in browser)
+                            fullActionList.add(Action.UP);
+                            fullActionList.add(Action.DOWN);
+
+                            actionList.clear();
+                        }
+                    }
+
+                }
+            }
+
+
+        }
+
+        fullActionList.addAll(actionList);
+
+        System.out.println(fullActionList);
+        System.out.println(fullActionList.size());
+    }
 
 
 }
